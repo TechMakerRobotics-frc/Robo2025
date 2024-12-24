@@ -1,10 +1,10 @@
 package frc.robot.subsystems.drive;
 
 import static frc.robot.subsystems.drive.DriveConstants.*;
-import static frc.robot.util.SparkUtil.*;
-import static frc.robot.util.SparkUtil.tryUntilOk;
 import static frc.robot.util.PhoenixUtil.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
+import static frc.robot.util.SparkUtil.*;
+import static frc.robot.util.SparkUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -20,19 +20,17 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
-
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -41,7 +39,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-
 import frc.robot.generated.TunerConstants;
 import java.util.Queue;
 import java.util.function.DoubleSupplier;
@@ -68,7 +65,7 @@ public class ModuleIOSparkTalon implements ModuleIO {
 
   // Closed loop controllers
   private final SparkClosedLoopController turnController;
-  
+
   // Queue inputs from odometry thread
   private final Queue<Double> timestampQueue;
   private final Queue<Double> timestampQueueSpark;
@@ -79,7 +76,6 @@ public class ModuleIOSparkTalon implements ModuleIO {
   private final TorqueCurrentFOC torqueCurrentRequest = new TorqueCurrentFOC(0);
   private final VelocityTorqueCurrentFOC velocityTorqueCurrentRequest =
       new VelocityTorqueCurrentFOC(0.0);
-
 
   // Inputs from drive motor
   private final StatusSignal<Angle> drivePosition;
@@ -115,7 +111,7 @@ public class ModuleIOSparkTalon implements ModuleIO {
     turnController = turnSpark.getClosedLoopController();
     cancoder = new CANcoder(constants.CANcoderId, TunerConstants.DrivetrainConstants.CANBusName);
     turnEncoder = turnSpark.getAbsoluteEncoder();
-    
+
     // Configure drive motor
     var driveConfig = constants.DriveMotorInitialConfigs;
     driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -167,7 +163,6 @@ public class ModuleIOSparkTalon implements ModuleIO {
             turnSpark.configure(
                 turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
-
     // Configure CANCoder
     CANcoderConfiguration cancoderConfig = constants.CANcoderInitialConfigs;
     cancoderConfig.MagnetSensor.MagnetOffset = constants.CANcoderOffset;
@@ -183,7 +178,6 @@ public class ModuleIOSparkTalon implements ModuleIO {
     turnPositionQueue =
         SparkOdometryThread.getInstance().registerSignal(turnSpark, turnEncoder::getPosition);
 
-
     // Create drive status signals
     drivePosition = driveTalon.getPosition();
     drivePositionQueue =
@@ -193,13 +187,8 @@ public class ModuleIOSparkTalon implements ModuleIO {
     driveCurrent = driveTalon.getStatorCurrent();
 
     // Configure periodic frames
-    BaseStatusSignal.setUpdateFrequencyForAll(
-        Drive.ODOMETRY_FREQUENCY, drivePosition);
-    BaseStatusSignal.setUpdateFrequencyForAll(
-        50.0,
-        driveVelocity,
-        driveAppliedVolts,
-        driveCurrent);
+    BaseStatusSignal.setUpdateFrequencyForAll(Drive.ODOMETRY_FREQUENCY, drivePosition);
+    BaseStatusSignal.setUpdateFrequencyForAll(50.0, driveVelocity, driveAppliedVolts, driveCurrent);
     ParentDevice.optimizeBusUtilizationForAll(driveTalon);
   }
 
@@ -216,7 +205,7 @@ public class ModuleIOSparkTalon implements ModuleIO {
     inputs.driveAppliedVolts = driveAppliedVolts.getValueAsDouble();
     inputs.driveCurrentAmps = driveCurrent.getValueAsDouble();
 
-// Update turn inputs
+    // Update turn inputs
     sparkStickyFault = false;
     ifOk(
         turnSpark,
