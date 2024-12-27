@@ -1,5 +1,7 @@
 package frc.robot.commands.drive;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -41,6 +43,19 @@ public class AlignTo extends Command {
   public AlignTo(Drive drive, Translation2d translation, double timeOut) {
     this.drive = drive;
     this.targetPose = new Pose2d(translation, new Rotation2d());
+    this.thetaController = new PIDController(1.0, 0.0, 0.0);
+    this.thetaController.enableContinuousInput(-Math.PI, Math.PI);
+    this.thetaController.setTolerance(0.05);
+    this.timeOut = timeOut;
+    addRequirements(drive);
+  }
+
+  public AlignTo(Drive drive, int tag, double timeOut) {
+    this.drive = drive;
+    AprilTagFieldLayout fTagFieldLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo);
+
+    this.targetPose = fTagFieldLayout.getTagPose(tag).get().toPose2d();
     this.thetaController = new PIDController(1.0, 0.0, 0.0);
     this.thetaController.enableContinuousInput(-Math.PI, Math.PI);
     this.thetaController.setTolerance(0.05);
