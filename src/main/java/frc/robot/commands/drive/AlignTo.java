@@ -5,6 +5,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drive.Drive;
 
@@ -49,11 +51,20 @@ public class AlignTo extends Command {
   public void execute() {
     Pose2d currentPose = drive.getPose();
     Rotation2d currentRotation = currentPose.getRotation();
+    
     double desiredTheta =
         Math.atan2(targetPose.getY() - currentPose.getY(), targetPose.getX() - currentPose.getX());
     double rotationSpeed = thetaController.calculate(currentRotation.getRadians(), desiredTheta);
-    drive.runVelocity(new ChassisSpeeds(0, 0, rotationSpeed));
-    ;
+    
+    ChassisSpeeds speed = new ChassisSpeeds(0, 0, rotationSpeed);
+    
+    boolean isFlipped =
+        DriverStation.getAlliance().isPresent()
+            && DriverStation.getAlliance().get() == Alliance.Red;
+    speed.toRobotRelativeSpeeds(
+        isFlipped ? drive.getRotation().plus(new Rotation2d(Math.PI)) : drive.getRotation());
+
+    drive.runVelocity(speed);
   }
 
   @Override

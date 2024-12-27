@@ -22,7 +22,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.drive.AlignTo;
 import frc.robot.commands.drive.DriveCommands;
+import frc.robot.commands.drive.DriveTo;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -35,7 +37,6 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -70,8 +71,10 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOPhotonVision(VisionConstants.camera0Name, VisionConstants.robotToCamera0),
-                new VisionIOPhotonVision(VisionConstants.camera1Name, VisionConstants.robotToCamera1));
+                new VisionIOPhotonVision(
+                    VisionConstants.camera0Name, VisionConstants.robotToCamera0),
+                new VisionIOPhotonVision(
+                    VisionConstants.camera1Name, VisionConstants.robotToCamera1));
         break;
 
       case SIM:
@@ -86,8 +89,10 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOPhotonVisionSim(VisionConstants.camera0Name, VisionConstants.robotToCamera0, drive::getPose),
-                new VisionIOPhotonVisionSim(VisionConstants.camera1Name, VisionConstants.robotToCamera1, drive::getPose));
+                new VisionIOPhotonVisionSim(
+                    VisionConstants.camera0Name, VisionConstants.robotToCamera0, drive::getPose),
+                new VisionIOPhotonVisionSim(
+                    VisionConstants.camera1Name, VisionConstants.robotToCamera1, drive::getPose));
         break;
 
       default:
@@ -121,7 +126,8 @@ public class RobotContainer {
         "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-
+    autoChooser.addOption("Align To 5 X, 5 Y", new AlignTo(drive, 5, 5));
+    autoChooser.addOption("Drive To 5 X, 5 Y", new DriveTo(5, 5, 15));
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -135,21 +141,18 @@ public class RobotContainer {
   private void configureButtonBindings() {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
-            drive,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+        DriveCommands.joystickDriveAtPoint(
+            drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), 5, 5));
 
     // Lock to 0° when A button is held
     controller
         .a()
         .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
+            DriveCommands.joystickDrive(
                 drive,
                 () -> -controller.getLeftY(),
                 () -> -controller.getLeftX(),
-                () -> new Rotation2d()));
+                () -> -controller.getRightX()));
 
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
