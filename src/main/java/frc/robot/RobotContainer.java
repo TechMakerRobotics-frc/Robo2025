@@ -126,7 +126,7 @@ public class RobotContainer {
         "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption("Align To 5 X, 5 Y", new AlignTo(drive, 5, 5));
+    autoChooser.addOption("Align To 5 X, 5 Y", new AlignTo(drive, 5, 5, 5));
     autoChooser.addOption("Drive To 5 X, 5 Y", new DriveTo(5, 5, 15));
     // Configure the button bindings
     configureButtonBindings();
