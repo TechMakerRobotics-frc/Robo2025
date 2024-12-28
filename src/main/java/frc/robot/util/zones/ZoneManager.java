@@ -3,22 +3,26 @@ package frc.robot.util.zones;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drive.Drive;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.littletonrobotics.junction.AutoLogOutput;
 
-public class ZoneManager extends SubsystemBase {
+public class ZoneManager {
   private Map<String, List<Pose2d>> zones;
   private final String zoneName;
   private final Drive drive;
   private Pose2d closestPose = new Pose2d();
   private Pose2d currentPose;
+  private Pose2d[] poses;
+
+  private final ScheduledExecutorService scheduler;
 
   public static class PoseData {
     public double x;
@@ -39,69 +43,51 @@ public class ZoneManager extends SubsystemBase {
 
     // Verifique se o arquivo existe
     if (!jsonFile.exists()) {
-      String errorMsg =
-          "Arquivo zones.json não encontrado no diretório: " + jsonFile.getAbsolutePath();
-      System.err.println(errorMsg);
-      SmartDashboard.putString("ZoneManager/Status", errorMsg); // Log para o SmartDashboard
-      throw new IOException(errorMsg);
+      throw new IOException(
+          "Arquivo zones.json não encontrado no diretório: " + jsonFile.getAbsolutePath());
     }
 
     try {
       ZoneData zoneData = mapper.readValue(jsonFile, ZoneData.class);
 
-      // Verifique se há zonas carregadas do JSON
       if (zoneData.zones == null || zoneData.zones.isEmpty()) {
-        String errorMsg = "Nenhuma zona encontrada no arquivo JSON.";
-        System.err.println(errorMsg);
-        SmartDashboard.putString("ZoneManager/Status", errorMsg); // Log para o SmartDashboard
-        throw new IOException(errorMsg);
+        throw new IOException("Nenhuma zona encontrada no arquivo JSON.");
       }
 
-      // Usando transformação para criar a lista de Pose2d
       this.zones = new java.util.HashMap<>();
       for (Map.Entry<String, List<PoseData>> entry : zoneData.zones.entrySet()) {
         List<Pose2d> pose2dList = new ArrayList<>();
         for (PoseData poseData : entry.getValue()) {
-          Pose2d pose = poseData.toPose2d();
-          pose2dList.add(pose);
+          pose2dList.add(poseData.toPose2d());
         }
         this.zones.put(entry.getKey(), pose2dList);
       }
 
-      String successMsg = "Zonas carregadas com sucesso: " + this.zones.size() + " zonas";
-      System.out.println(successMsg);
-      SmartDashboard.putString("ZoneManager/Status", successMsg); // Log para o SmartDashboard
-      SmartDashboard.putNumber(
-          "ZoneManager/TotalZones", this.zones.size()); // Log de número de zonas
-
+      System.out.println("Zonas carregadas com sucesso: " + this.zones.size() + " zonas");
     } catch (IOException e) {
-      String errorMsg = "Erro ao ler o arquivo JSON: " + e.getMessage();
-      System.err.println(errorMsg);
-      SmartDashboard.putString("ZoneManager/Status", errorMsg); // Log para o SmartDashboard
-      throw e; // Re-lança a exceção para indicar falha crítica no carregamento
+      throw new IOException("Erro ao ler o arquivo JSON: " + e.getMessage(), e);
     }
+
+    scheduler = Executors.newScheduledThreadPool(1);
+    scheduler.scheduleAtFixedRate(this::periodic, 0, 80, TimeUnit.MILLISECONDS);
   }
 
-  // Obtém as poses de uma zona específica
-  public List<Pose2d> getZonePoses(String zoneName) {
-    if (zones.containsKey(zoneName)) {
-      return zones.get(zoneName);
-    } else {
-      String errorMsg = "Zona não encontrada: " + zoneName;
-      System.err.println(errorMsg);
-      SmartDashboard.putString("ZoneManager/Status", errorMsg); // Log para o SmartDashboard
-      throw new IllegalArgumentException(errorMsg);
-    }
-  }
-
-  @Override
-  public void periodic() {
+  private void periodic() {
     currentPose = drive.getPose();
     calculateClosestPose();
   }
 
-  public void calculateClosestPose() {
+  public List<Pose2d> getZonePoses(String zoneName) {
+    if (zones.containsKey(zoneName)) {
+      return zones.get(zoneName);
+    } else {
+      throw new IllegalArgumentException("Zona não encontrada: " + zoneName);
+    }
+  }
+
+  private void calculateClosestPose() {
     List<Pose2d> zonePoses = getZonePoses(zoneName);
+    poses = zonePoses.toArray(new Pose2d[0]);
 
     closestPose =
         zonePoses.stream()
@@ -121,6 +107,15 @@ public class ZoneManager extends SubsystemBase {
   @AutoLogOutput(key = "ZoneManager/currentPose")
   public Pose2d getCurrentPose() {
     return currentPose;
+  }
+
+  @AutoLogOutput(key = "ZoneManager/ListPoses")
+  public Pose2d[] getCurrentPoses() {
+    return poses;
+  }
+
+  public void stop() {
+    scheduler.shutdown();
   }
 
   public static class ZoneData {
