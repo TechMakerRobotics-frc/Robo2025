@@ -7,6 +7,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.zones.ZoneManager;
 
 public class DriveTo extends Command {
 
@@ -15,6 +17,7 @@ public class DriveTo extends Command {
   private PathConstraints constraints = new PathConstraints(4.5, 2.5, 4.5, 2.5);
   private Command pathfollower;
   private Timer time = new Timer();
+  private ZoneManager zoneManager;
 
   public DriveTo(Pose2d goalPose, double timeOut) {
     this.timeOut = timeOut;
@@ -39,6 +42,17 @@ public class DriveTo extends Command {
   public DriveTo(double x, double y, double heading, double timeOut) {
     this.timeOut = timeOut;
     this.goalPose = new Pose2d(x, y, new Rotation2d(heading));
+  }
+
+  public DriveTo(Drive drive, ZoneManager zoneManager, double timeOut) {
+    this.timeOut = timeOut;
+    this.zoneManager = zoneManager;
+
+    if (this.zoneManager != null) {
+      this.goalPose = zoneManager.getClosestPoseZone();
+    } else {
+      this.goalPose = drive.getPose();
+    }
   }
 
   @Override

@@ -37,6 +37,8 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.util.zones.ZoneManager;
+import java.io.IOException;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -49,6 +51,7 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final Vision vision;
+  private ZoneManager zone2Manager;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -75,6 +78,11 @@ public class RobotContainer {
                     VisionConstants.camera0Name, VisionConstants.robotToCamera0),
                 new VisionIOPhotonVision(
                     VisionConstants.camera1Name, VisionConstants.robotToCamera1));
+        try {
+          zone2Manager = new ZoneManager(drive, "zone2");
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
         break;
 
       case SIM:
@@ -93,6 +101,11 @@ public class RobotContainer {
                     VisionConstants.camera0Name, VisionConstants.robotToCamera0, drive::getPose),
                 new VisionIOPhotonVisionSim(
                     VisionConstants.camera1Name, VisionConstants.robotToCamera1, drive::getPose));
+        try {
+          zone2Manager = new ZoneManager(drive, "zone2");
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
         break;
 
       default:
@@ -105,6 +118,11 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+        try {
+          zone2Manager = new ZoneManager(drive, "zone2");
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
         break;
     }
 
@@ -129,6 +147,7 @@ public class RobotContainer {
     autoChooser.addOption("Align To 5 X, 5 Y", new AlignTo(drive, 5, 5, 5));
     autoChooser.addOption("Align to Tag 7", new AlignTo(drive, 7, 5));
     autoChooser.addOption("Drive To 5 X, 5 Y", new DriveTo(5, 5, 15));
+    autoChooser.addOption("Drive To Zone 2", new DriveTo(drive, zone2Manager, 15));
 
     // Configure the button bindings
     configureButtonBindings();
