@@ -12,8 +12,8 @@ class ZoneEditor:
         self.start_x = self.start_y = None
 
         # Dimensões oficiais do campo em metros
-        self.field_width_m = 16.5
-        self.field_height_m = 8.1
+        self.field_width_m = 16.55
+        self.field_height_m = 8.2
 
         # Configurar a interface gráfica
         self.canvas = tk.Canvas(root)
@@ -81,8 +81,8 @@ class ZoneEditor:
         x2, y2 = max(self.start_x, end_x), max(self.start_y, end_y)
 
         # Converter para coordenadas do campo real
-        x1_field, y1_field = x1 * self.scale_x, y1 * self.scale_y
-        x2_field, y2_field = x2 * self.scale_x, y2 * self.scale_y
+        x1_field, y1_field = x1 * self.scale_x, (self.image_height_px - y1) * self.scale_y
+        x2_field, y2_field = x2 * self.scale_x, (self.image_height_px - y2) * self.scale_y
 
         # Gerar uma grade de poses dentro do retângulo
         grid_spacing = 0.1  # Espaçamento da grade em metros
@@ -91,7 +91,7 @@ class ZoneEditor:
                 self.zones[self.current_zone].append({"x": round(x, 2), "y": round(y, 2), "heading": 0.0})
                 # Desenhar os pontos no canvas
                 canvas_x = x / self.scale_x
-                canvas_y = y / self.scale_y
+                canvas_y = self.image_height_px - (y / self.scale_y)
                 self.canvas.create_oval(
                     canvas_x - 2, canvas_y - 2,
                     canvas_x + 2, canvas_y + 2,
@@ -119,6 +119,6 @@ class ZoneEditor:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    editor = ZoneEditor(root, "src/main/java/frc/robot/util/zones/Crescendo.PNG")
+    editor = ZoneEditor(root, "src/main/java/frc/robot/util/zones/Crescendo.png")
     print(f"Diretório atual: {os.getcwd()}")
     root.mainloop()
