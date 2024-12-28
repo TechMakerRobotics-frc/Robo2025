@@ -47,12 +47,7 @@ public class DriveTo extends Command {
   public DriveTo(Drive drive, ZoneManager zoneManager, double timeOut) {
     this.timeOut = timeOut;
     this.zoneManager = zoneManager;
-
-    if (this.zoneManager != null) {
-      this.goalPose = zoneManager.getClosestPoseZone();
-    } else {
-      this.goalPose = drive.getPose();
-    }
+    this.goalPose = this.zoneManager.getClosestPoseZone();
   }
 
   @Override
