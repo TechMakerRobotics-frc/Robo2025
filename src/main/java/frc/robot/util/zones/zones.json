@@ -1,15 +1,10 @@
 {
   "zones": {
-    "zone1": [
+    "BlueSpeakerZone": [
       {
-        "center_x": 2.78,
-        "center_y": 5.37,
-        "radius": 0.81
-      },
-      {
-        "center_x": 2.36,
-        "center_y": 5.4,
-        "radius": 0.73
+        "center_x": 1.97,
+        "center_y": 5.38,
+        "radius": 1.98
       }
     ]
   }

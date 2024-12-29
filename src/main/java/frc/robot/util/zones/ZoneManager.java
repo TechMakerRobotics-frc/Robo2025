@@ -114,7 +114,7 @@ public class ZoneManager {
   }
 
   @AutoLogOutput(key = "ZoneManager/closestPose")
-  public Pose2d getClosestPoseZone() {
+  public Pose2d getClosestPose() {
     return closestPose;
   }
 

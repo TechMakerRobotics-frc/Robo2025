@@ -7,20 +7,21 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.zones.ZoneManager;
 
 /** Command to drive the robot to a specified pose or target with various input options. */
 public class DriveTo extends Command {
 
-  private final Pose2d goalPose;
   private final double timeOut;
   private PathConstraints constraints = new PathConstraints(4.5, 2.5, 4.5, 2.5);
+  private Pose2d goalPose;
   private Command pathfollower;
   private Timer time = new Timer();
   private ZoneManager zoneManager;
+  private boolean isFinished = false;
 
   /**
    * Constructs a DriveTo command targeting a specific pose.
@@ -73,59 +74,69 @@ public class DriveTo extends Command {
    *
    * @param x the x-coordinate of the target position.
    * @param y the y-coordinate of the target position.
-   * @param heading the target heading at the destination (in radians).
+   * @param heading the target heading at the destination (in degrees).
    * @param timeOut the timeout for the command in seconds.
    */
   public DriveTo(double x, double y, double heading, double timeOut) {
     this.timeOut = timeOut;
-    this.goalPose = new Pose2d(x, y, new Rotation2d(heading));
+    this.goalPose = new Pose2d(x, y, new Rotation2d(Units.degreesToRadians(heading)));
   }
 
   /**
    * Constructs a DriveTo command targeting the closest zone pose from a ZoneManager.
    *
-   * @param drive the drive subsystem.
    * @param zoneManager the ZoneManager instance to retrieve the closest zone pose.
    * @param timeOut the timeout for the command in seconds.
    */
-  public DriveTo(Drive drive, ZoneManager zoneManager, double timeOut) {
+  public DriveTo(ZoneManager zoneManager, double timeOut) {
     this.timeOut = timeOut;
     this.zoneManager = zoneManager;
-    this.goalPose = this.zoneManager.getClosestPoseZone();
+    this.goalPose = this.zoneManager.getClosestPose();
   }
 
   /**
    * Constructs a DriveTo command targeting the closest zone pose with a specific angle.
    *
-   * @param drive the drive subsystem.
    * @param zoneManager the ZoneManager instance to retrieve the closest zone pose.
-   * @param angle the desired angle at the destination (in radians).
+   * @param angle the desired angle at the destination (in degrees).
    * @param timeOut the timeout for the command in seconds.
    */
-  public DriveTo(Drive drive, ZoneManager zoneManager, double angle, double timeOut) {
+  public DriveTo(ZoneManager zoneManager, double angle, double timeOut) {
     this.timeOut = timeOut;
     this.zoneManager = zoneManager;
     this.goalPose =
-        new Pose2d(this.zoneManager.getClosestPoseZone().getTranslation(), new Rotation2d(angle));
+        new Pose2d(
+            this.zoneManager.getClosestPose().getTranslation(),
+            new Rotation2d(Units.degreesToRadians(angle)));
   }
 
   /**
    * Constructs a DriveTo command targeting a specific AprilTag pose from its ID.
    *
-   * @param drive the drive subsystem.
    * @param zoneManager the ZoneManager instance to retrieve the closest zone pose.
    * @param tag the ID of the AprilTag to target.
    * @param timeOut the timeout for the command in seconds.
    */
-  public DriveTo(Drive drive, ZoneManager zoneManager, int tag, double timeOut) {
+  public DriveTo(ZoneManager zoneManager, int tag, double timeOut) {
     AprilTagFieldLayout fTagFieldLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo);
     this.timeOut = timeOut;
     this.zoneManager = zoneManager;
+
+    Pose2d tagPose =
+        fTagFieldLayout
+            .getTagPose(tag)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid AprilTag ID: " + tag))
+            .toPose2d();
+
+    Pose2d currentPose = this.zoneManager.getCurrentPose();
+
+    double desiredTheta =
+        Math.atan2(tagPose.getY() - currentPose.getY(), tagPose.getX() - currentPose.getX());
+
     this.goalPose =
         new Pose2d(
-            this.zoneManager.getClosestPoseZone().getTranslation(),
-            fTagFieldLayout.getTagPose(tag).get().toPose2d().getRotation());
+            this.zoneManager.getClosestPose().getTranslation(), new Rotation2d(desiredTheta));
   }
 
   @Override
@@ -143,7 +154,10 @@ public class DriveTo extends Command {
 
   @Override
   public boolean isFinished() {
-    return pathfollower == null || pathfollower.isFinished() || time.hasElapsed(timeOut);
+    return pathfollower == null
+        || pathfollower.isFinished()
+        || time.hasElapsed(timeOut)
+        || isFinished;
   }
 
   @Override

@@ -51,7 +51,7 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final Vision vision;
-  private ZoneManager zone2Manager;
+  private ZoneManager BlueSpeakerZone;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -79,7 +79,7 @@ public class RobotContainer {
                 new VisionIOPhotonVision(
                     VisionConstants.camera1Name, VisionConstants.robotToCamera1));
         try {
-          zone2Manager = new ZoneManager(drive, "zone1");
+          BlueSpeakerZone = new ZoneManager(drive, "BlueSpeakerZone");
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -102,7 +102,7 @@ public class RobotContainer {
                 new VisionIOPhotonVisionSim(
                     VisionConstants.camera1Name, VisionConstants.robotToCamera1, drive::getPose));
         try {
-          zone2Manager = new ZoneManager(drive, "zone1");
+          BlueSpeakerZone = new ZoneManager(drive, "BlueSpeakerZone");
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -119,7 +119,7 @@ public class RobotContainer {
                 new ModuleIO() {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
         try {
-          zone2Manager = new ZoneManager(drive, "zone1");
+          BlueSpeakerZone = new ZoneManager(drive, "BlueSpeakerZone");
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -144,10 +144,10 @@ public class RobotContainer {
         "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption("Align To 5 X, 5 Y", new AlignTo(drive, 5, 5, 5));
+    autoChooser.addOption("Align to 5 X, 5 Y", new AlignTo(drive, 5, 5, 5));
     autoChooser.addOption("Align to Tag 7", new AlignTo(drive, 7, 5));
-    autoChooser.addOption("Drive To 5 X, 5 Y", new DriveTo(5, 5, 15));
-    autoChooser.addOption("Drive To Zone 2", new DriveTo(drive, zone2Manager, 15));
+    autoChooser.addOption("Drive to 5 X, 5 Y", new DriveTo(5, 5, 90, 15));
+    autoChooser.addOption("Drive to blue speaker zone", new DriveTo(BlueSpeakerZone, 7, 15));
 
     // Configure the button bindings
     configureButtonBindings();
