@@ -2,6 +2,8 @@ package frc.robot.commands.drive;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -48,6 +50,24 @@ public class DriveTo extends Command {
     this.timeOut = timeOut;
     this.zoneManager = zoneManager;
     this.goalPose = this.zoneManager.getClosestPoseZone();
+  }
+
+  public DriveTo(Drive drive, ZoneManager zoneManager, double angle, double timeOut) {
+    this.timeOut = timeOut;
+    this.zoneManager = zoneManager;
+    this.goalPose =
+        new Pose2d(this.zoneManager.getClosestPoseZone().getTranslation(), new Rotation2d(angle));
+  }
+
+  public DriveTo(Drive drive, ZoneManager zoneManager, int tag, double timeOut) {
+    AprilTagFieldLayout fTagFieldLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo);
+    this.timeOut = timeOut;
+    this.zoneManager = zoneManager;
+    this.goalPose =
+        new Pose2d(
+            this.zoneManager.getClosestPoseZone().getTranslation(),
+            fTagFieldLayout.getTagPose(tag).get().toPose2d().getRotation());
   }
 
   @Override
