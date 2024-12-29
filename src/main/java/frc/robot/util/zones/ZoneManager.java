@@ -65,7 +65,7 @@ public class ZoneManager {
     }
 
     scheduler = Executors.newScheduledThreadPool(1);
-    scheduler.scheduleAtFixedRate(this::periodic, 0, 80, TimeUnit.MILLISECONDS);
+    scheduler.scheduleAtFixedRate(this::periodic, 0, 20, TimeUnit.MILLISECONDS);
   }
 
   private void periodic() {
