@@ -12,8 +12,8 @@ class ZoneEditor:
         self.start_x = self.start_y = None
 
         # Dimensões oficiais do campo em metros
-        self.field_width_m = 16.55
-        self.field_height_m = 8.2
+        self.field_width_m = 16.54
+        self.field_height_m = 8.21
 
         # Configurar a interface gráfica
         self.canvas = tk.Canvas(root)
