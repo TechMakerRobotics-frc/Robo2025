@@ -20,7 +20,6 @@ public class ZoneManager {
   private final Drive drive;
   private Pose2d closestPose = new Pose2d();
   private Pose2d currentPose;
-  private ZoneCircle[] circles;
 
   private final ScheduledExecutorService scheduler;
 
@@ -84,7 +83,6 @@ public class ZoneManager {
 
   private void calculateClosestPose() {
     List<ZoneCircle> zoneCircles = getZoneCircles(zoneName);
-    circles = zoneCircles.toArray(new ZoneCircle[0]);
 
     closestPose =
         zoneCircles.stream()
