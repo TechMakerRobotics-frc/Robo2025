@@ -12,6 +12,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.zones.ZoneManager;
 
+/**
+ * Command to drive the robot to a specified pose or target with various input options.
+ */
 public class DriveTo extends Command {
 
   private final Pose2d goalPose;
@@ -21,37 +24,86 @@ public class DriveTo extends Command {
   private Timer time = new Timer();
   private ZoneManager zoneManager;
 
+  /**
+   * Constructs a DriveTo command targeting a specific pose.
+   *
+   * @param goalPose the target pose to drive to.
+   * @param timeOut the timeout for the command in seconds.
+   */
   public DriveTo(Pose2d goalPose, double timeOut) {
     this.timeOut = timeOut;
     this.goalPose = goalPose;
   }
 
+  /**
+   * Constructs a DriveTo command targeting a translation with default rotation.
+   *
+   * @param goalTranslation the target translation to drive to.
+   * @param timeOut the timeout for the command in seconds.
+   */
   public DriveTo(Translation2d goalTranslation, double timeOut) {
     this.timeOut = timeOut;
     this.goalPose = new Pose2d(goalTranslation, new Rotation2d());
   }
 
+  /**
+   * Constructs a DriveTo command targeting a translation and a specific rotation.
+   *
+   * @param goalTranslation the target translation to drive to.
+   * @param goalRotation the target rotation at the destination.
+   * @param timeOut the timeout for the command in seconds.
+   */
   public DriveTo(Translation2d goalTranslation, Rotation2d goalRotation, double timeOut) {
     this.timeOut = timeOut;
     this.goalPose = new Pose2d(goalTranslation, goalRotation);
   }
 
+  /**
+   * Constructs a DriveTo command targeting a specific x and y position with default rotation.
+   *
+   * @param x the x-coordinate of the target position.
+   * @param y the y-coordinate of the target position.
+   * @param timeOut the timeout for the command in seconds.
+   */
   public DriveTo(double x, double y, double timeOut) {
     this.timeOut = timeOut;
     this.goalPose = new Pose2d(x, y, new Rotation2d());
   }
 
+  /**
+   * Constructs a DriveTo command targeting a specific x, y position and heading.
+   *
+   * @param x the x-coordinate of the target position.
+   * @param y the y-coordinate of the target position.
+   * @param heading the target heading at the destination (in radians).
+   * @param timeOut the timeout for the command in seconds.
+   */
   public DriveTo(double x, double y, double heading, double timeOut) {
     this.timeOut = timeOut;
     this.goalPose = new Pose2d(x, y, new Rotation2d(heading));
   }
 
+  /**
+   * Constructs a DriveTo command targeting the closest zone pose from a ZoneManager.
+   *
+   * @param drive the drive subsystem.
+   * @param zoneManager the ZoneManager instance to retrieve the closest zone pose.
+   * @param timeOut the timeout for the command in seconds.
+   */
   public DriveTo(Drive drive, ZoneManager zoneManager, double timeOut) {
     this.timeOut = timeOut;
     this.zoneManager = zoneManager;
     this.goalPose = this.zoneManager.getClosestPoseZone();
   }
 
+  /**
+   * Constructs a DriveTo command targeting the closest zone pose with a specific angle.
+   *
+   * @param drive the drive subsystem.
+   * @param zoneManager the ZoneManager instance to retrieve the closest zone pose.
+   * @param angle the desired angle at the destination (in radians).
+   * @param timeOut the timeout for the command in seconds.
+   */
   public DriveTo(Drive drive, ZoneManager zoneManager, double angle, double timeOut) {
     this.timeOut = timeOut;
     this.zoneManager = zoneManager;
@@ -59,6 +111,14 @@ public class DriveTo extends Command {
         new Pose2d(this.zoneManager.getClosestPoseZone().getTranslation(), new Rotation2d(angle));
   }
 
+  /**
+   * Constructs a DriveTo command targeting a specific AprilTag pose from its ID.
+   *
+   * @param drive the drive subsystem.
+   * @param zoneManager the ZoneManager instance to retrieve the closest zone pose.
+   * @param tag the ID of the AprilTag to target.
+   * @param timeOut the timeout for the command in seconds.
+   */
   public DriveTo(Drive drive, ZoneManager zoneManager, int tag, double timeOut) {
     AprilTagFieldLayout fTagFieldLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo);
