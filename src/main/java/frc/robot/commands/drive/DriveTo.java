@@ -87,4 +87,9 @@ public class DriveTo extends Command {
   public boolean isFinished() {
     return pathfollower == null || pathfollower.isFinished() || time.hasElapsed(timeOut);
   }
+
+  @Override
+  public void end(boolean interrupted) {
+    time.stop();
+  }
 }
