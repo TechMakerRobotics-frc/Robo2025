@@ -32,9 +32,9 @@ class ZoneEditor:
 
         self.canvas.config(width=self.image_width_px, height=self.image_height_px)
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.image)
-        self.canvas.bind("<Button-1>", self.start_rectangle)
-        self.canvas.bind("<B1-Motion>", self.draw_rectangle)
-        self.canvas.bind("<ButtonRelease-1>", self.end_rectangle)
+        self.canvas.bind("<Button-1>", self.start_circle)
+        self.canvas.bind("<B1-Motion>", self.draw_circle)
+        self.canvas.bind("<ButtonRelease-1>", self.end_circle)
 
         self.zone_entry = tk.Entry(root)
         self.zone_entry.pack()
@@ -61,58 +61,57 @@ class ZoneEditor:
             self.current_zone = zone_name
             self.zone_entry.delete(0, tk.END)
 
-    def start_rectangle(self, event):
+    def start_circle(self, event):
         self.start_x = event.x
         self.start_y = event.y
 
-    def draw_rectangle(self, event):
+    def draw_circle(self, event):
         self.canvas.delete("preview")
-        self.canvas.create_rectangle(self.start_x, self.start_y, event.x, event.y, outline="red", tag="preview")
+        radius = ((event.x - self.start_x) ** 2 + (event.y - self.start_y) ** 2) ** 0.5
+        self.canvas.create_oval(
+            self.start_x - radius, self.start_y - radius,
+            self.start_x + radius, self.start_y + radius,
+            outline="red", tag="preview"
+        )
 
-    def end_rectangle(self, event):
+    def end_circle(self, event):
         if not self.current_zone:
             return
 
         end_x = event.x
         end_y = event.y
 
-        # Definir os limites do retângulo
-        x1, y1 = min(self.start_x, end_x), min(self.start_y, end_y)
-        x2, y2 = max(self.start_x, end_x), max(self.start_y, end_y)
+        # Calcular o raio do círculo
+        radius_px = ((end_x - self.start_x) ** 2 + (end_y - self.start_y) ** 2) ** 0.5
+        radius_m = radius_px * self.scale_x
 
-        # Converter para coordenadas do campo real
-        x1_field, y1_field = x1 * self.scale_x, (self.image_height_px - y1) * self.scale_y
-        x2_field, y2_field = x2 * self.scale_x, (self.image_height_px - y2) * self.scale_y
+        # Converter o centro para coordenadas do campo real
+        center_x_m = self.start_x * self.scale_x
+        center_y_m = (self.image_height_px - self.start_y) * self.scale_y
 
-        # Gerar uma grade de poses dentro do retângulo
-        grid_spacing = 0.1  # Espaçamento da grade em metros
-        for x in self.frange(x1_field, x2_field, grid_spacing):
-            for y in self.frange(y1_field, y2_field, grid_spacing):
-                self.zones[self.current_zone].append({"x": round(x, 2), "y": round(y, 2), "heading": 0.0})
-                # Desenhar os pontos no canvas
-                canvas_x = x / self.scale_x
-                canvas_y = self.image_height_px - (y / self.scale_y)
-                self.canvas.create_oval(
-                    canvas_x - 2, canvas_y - 2,
-                    canvas_x + 2, canvas_y + 2,
-                    fill="red"
-                )
+        self.zones[self.current_zone].append({
+            "center_x": round(center_x_m, 2),
+            "center_y": round(center_y_m, 2),
+            "radius": round(radius_m, 2)
+        })
 
-    def frange(self, start, stop, step):
-        while start <= stop:
-            yield start
-            start += step
+        # Desenhar o círculo final no canvas
+        self.canvas.create_oval(
+            self.start_x - radius_px, self.start_y - radius_px,
+            self.start_x + radius_px, self.start_y + radius_px,
+            outline="blue"
+        )
 
     def save_zones(self):
         # Caminho para salvar o arquivo JSON
         save_path = "src/main/java/frc/robot/util/zones/zones.json"
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        
+
         # Salvar as zonas
         data_to_save = {"zones": self.zones}
         try:
             with open(save_path, "w") as f:
-                json.dump(data_to_save, f, indent=4)  # Salvar no formato correto
+                json.dump(data_to_save, f, indent=4)
             print(f"Zonas salvas em {save_path}")
         except Exception as e:
             print(f"Erro ao salvar o arquivo: {e}")

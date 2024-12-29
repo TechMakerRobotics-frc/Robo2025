@@ -2,11 +2,11 @@ package frc.robot.util.zones;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.subsystems.drive.Drive;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -15,22 +15,22 @@ import java.util.concurrent.TimeUnit;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 public class ZoneManager {
-  private Map<String, List<Pose2d>> zones;
+  private Map<String, List<ZoneCircle>> zones;
   private final String zoneName;
   private final Drive drive;
   private Pose2d closestPose = new Pose2d();
   private Pose2d currentPose;
-  private Pose2d[] poses;
+  private ZoneCircle[] circles;
 
   private final ScheduledExecutorService scheduler;
 
-  public static class PoseData {
-    public double x;
-    public double y;
-    public double heading;
+  public static class ZoneCircle {
+    public double center_x;
+    public double center_y;
+    public double radius;
 
-    public Pose2d toPose2d() {
-      return new Pose2d(x, y, Rotation2d.fromDegrees(heading));
+    public Translation2d getCenter() {
+      return new Translation2d(center_x, center_y);
     }
   }
 
@@ -55,15 +55,12 @@ public class ZoneManager {
       }
 
       this.zones = new java.util.HashMap<>();
-      for (Map.Entry<String, List<PoseData>> entry : zoneData.zones.entrySet()) {
-        List<Pose2d> pose2dList = new ArrayList<>();
-        for (PoseData poseData : entry.getValue()) {
-          pose2dList.add(poseData.toPose2d());
-        }
-        this.zones.put(entry.getKey(), pose2dList);
+      for (Map.Entry<String, List<ZoneCircle>> entry : zoneData.zones.entrySet()) {
+        this.zones.put(entry.getKey(), entry.getValue());
       }
 
-      System.out.println("Zonas carregadas com sucesso: " + this.zones.size() + " zonas");
+      SmartDashboard.putString(
+          "ZonesManager/zones", "Zonas carregadas com sucesso: " + this.zones.size() + " zonas");
     } catch (IOException e) {
       throw new IOException("Erro ao ler o arquivo JSON: " + e.getMessage(), e);
     }
@@ -77,7 +74,7 @@ public class ZoneManager {
     calculateClosestPose();
   }
 
-  public List<Pose2d> getZonePoses(String zoneName) {
+  public List<ZoneCircle> getZoneCircles(String zoneName) {
     if (zones.containsKey(zoneName)) {
       return zones.get(zoneName);
     } else {
@@ -86,17 +83,36 @@ public class ZoneManager {
   }
 
   private void calculateClosestPose() {
-    List<Pose2d> zonePoses = getZonePoses(zoneName);
-    poses = zonePoses.toArray(new Pose2d[0]);
+    List<ZoneCircle> zoneCircles = getZoneCircles(zoneName);
+    circles = zoneCircles.toArray(new ZoneCircle[0]);
 
     closestPose =
-        zonePoses.stream()
+        zoneCircles.stream()
+            .map(this::findClosestPointInCircle)
             .min(
                 (p1, p2) ->
                     Double.compare(
                         p1.getTranslation().getDistance(currentPose.getTranslation()),
                         p2.getTranslation().getDistance(currentPose.getTranslation())))
-            .orElseThrow(() -> new IllegalArgumentException("Lista de poses está vazia!"));
+            .orElseThrow(() -> new IllegalArgumentException("Lista de zonas está vazia!"));
+  }
+
+  private Pose2d findClosestPointInCircle(ZoneCircle circle) {
+    Translation2d center = circle.getCenter();
+    Translation2d robotTranslation = currentPose.getTranslation();
+
+    // Vetor do centro para o robô
+    Translation2d toRobot = robotTranslation.minus(center);
+    double distanceToCenter = toRobot.getNorm();
+
+    if (distanceToCenter <= circle.radius) {
+      // Robô está dentro ou na borda do círculo
+      return new Pose2d(robotTranslation, currentPose.getRotation());
+    } else {
+      // Robô está fora do círculo; ajusta para o ponto mais próximo na borda
+      Translation2d closestPoint = center.plus(toRobot.times(circle.radius / distanceToCenter));
+      return new Pose2d(closestPoint, currentPose.getRotation());
+    }
   }
 
   @AutoLogOutput(key = "ZoneManager/closestPose")
@@ -109,16 +125,11 @@ public class ZoneManager {
     return currentPose;
   }
 
-  @AutoLogOutput(key = "ZoneManager/ListPoses")
-  public Pose2d[] getCurrentPoses() {
-    return poses;
-  }
-
   public void stop() {
     scheduler.shutdown();
   }
 
   public static class ZoneData {
-    public Map<String, List<PoseData>> zones;
+    public Map<String, List<ZoneCircle>> zones;
   }
 }

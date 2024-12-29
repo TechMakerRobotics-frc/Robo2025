@@ -79,7 +79,7 @@ public class RobotContainer {
                 new VisionIOPhotonVision(
                     VisionConstants.camera1Name, VisionConstants.robotToCamera1));
         try {
-          zone2Manager = new ZoneManager(drive, "zone2");
+          zone2Manager = new ZoneManager(drive, "zone1");
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -102,7 +102,7 @@ public class RobotContainer {
                 new VisionIOPhotonVisionSim(
                     VisionConstants.camera1Name, VisionConstants.robotToCamera1, drive::getPose));
         try {
-          zone2Manager = new ZoneManager(drive, "zone2");
+          zone2Manager = new ZoneManager(drive, "zone1");
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -119,7 +119,7 @@ public class RobotContainer {
                 new ModuleIO() {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
         try {
-          zone2Manager = new ZoneManager(drive, "zone2");
+          zone2Manager = new ZoneManager(drive, "zone1");
         } catch (IOException e) {
           e.printStackTrace();
         }

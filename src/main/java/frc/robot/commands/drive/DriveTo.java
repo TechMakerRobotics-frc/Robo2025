@@ -12,9 +12,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.zones.ZoneManager;
 
-/**
- * Command to drive the robot to a specified pose or target with various input options.
- */
+/** Command to drive the robot to a specified pose or target with various input options. */
 public class DriveTo extends Command {
 
   private final Pose2d goalPose;
